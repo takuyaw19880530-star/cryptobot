@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CAPTAIN HOOK · BTC/JPY — 観測レポート</title>
+<style>
+  :root{
+    --paper:#F7F6F2; --card:#FFFFFF; --ink:#17181A; --sub:#8A8D93;
+    --line:#DCDAD2; --line2:#ECEAE3;
+    --green:#1E8F5A; --green-bg:#E9F4EE;
+    --red:#C6403B; --red-bg:#F9ECEB;
+    --slate:#5B6B7E;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);
+    font-family:"SF Mono",Menlo,Consolas,"Hiragino Sans",monospace;
+    font-size:12px;padding:18px clamp(12px,3vw,40px) 0}
+  .jp{font-family:"Hiragino Sans","Yu Gothic",sans-serif}
+  .frame{max-width:1240px;margin:0 auto;background:var(--card);
+    border:1.5px solid var(--ink);border-radius:4px}
+
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:14px 20px;border-bottom:1.5px solid var(--ink)}
+  .mark{width:30px;height:30px;border:1.5px solid var(--ink);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:14px}
+  .title small{display:block;font-size:9px;color:var(--sub);
+    letter-spacing:.18em;text-transform:uppercase;margin-bottom:2px}
+  .title h1{font-size:15px;font-weight:700;letter-spacing:.05em}
+  .title h1 .accent{color:var(--red)}
+  header .spacer{flex:1}
+  .badge{font-size:10px;letter-spacing:.12em;padding:5px 12px;
+    border:1px solid var(--line);border-radius:3px;color:var(--sub);
+    display:flex;align-items:center;gap:6px}
+  .badge.live{background:var(--green-bg);border-color:#BCDCCB;color:var(--green)}
+  .badge .blink{width:6px;height:6px;border-radius:50%;background:var(--green);
+    animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .utc{font-size:12px;letter-spacing:.06em}
+
+  section{border-bottom:1px solid var(--ink);padding:16px 20px}
+  section:last-of-type{border-bottom:none}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .sec-head .sq{width:6px;height:6px;background:var(--ink)}
+  .sec-head h2{font-size:12px;font-weight:700;letter-spacing:.04em}
+  .sec-head .note{margin-left:auto;font-size:9px;color:var(--sub);
+    letter-spacing:.14em;text-transform:uppercase}
+
+  .pnl-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:0}
+  .pnl-left{padding-right:20px}
+  .pnl-right{border-left:1px solid var(--line);padding-left:20px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px}
+  .chip{font-size:10px;padding:3px 10px;border:1px solid var(--line);
+    border-radius:99px;color:var(--sub);letter-spacing:.04em}
+  .chip.pill-red{border:1px solid var(--red);color:var(--red)}
+  .hero-price{font-size:clamp(38px,7.5vw,62px);font-weight:700;
+    letter-spacing:-.01em;font-variant-numeric:tabular-nums;
+    margin:2px 0 14px;line-height:1.05}
+  .hero-price .yen{font-size:.55em;font-weight:400;color:var(--sub);margin-right:2px}
+  .hero-price .chg{font-size:15px;font-weight:700;margin-left:12px;white-space:nowrap}
+  .hero-price .chg small{font-size:9px;color:var(--sub);font-weight:400;
+    margin-left:5px;letter-spacing:.12em}
+  .hero-price .chg.down{color:var(--red)}
+  .hero-price .chg.up{color:var(--green)}
+  .substats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+  .substat{padding:10px 12px 2px;border-right:1px solid var(--line2)}
+  .substat:last-child{border-right:none}
+  .substat .v{font-size:16px;font-weight:700}
+  .substat .v.up{color:var(--green)} .substat .v.down{color:var(--red)}
+  .substat .k{font-size:9px;color:var(--sub);letter-spacing:.1em;margin-top:2px;
+    text-transform:uppercase}
+
+  .regime-box{border:1px solid var(--line);border-radius:4px;
+    padding:14px 16px;background:var(--paper)}
+  .regime-box .top{display:flex;align-items:center;gap:10px}
+  .regime-name{font-size:22px;font-weight:800;letter-spacing:.03em;color:var(--slate)}
+  .regime-name.r-trend_up{color:var(--green)}
+  .regime-name.r-trend_down{color:var(--red)}
+  .regime-name.r-range{color:var(--sub)}
+  .conf-num{margin-left:auto;font-size:22px;font-weight:700}
+  .conf-num small{font-size:9px;color:var(--sub);display:block;
+    letter-spacing:.14em;text-align:right}
+  .confbar{height:6px;background:var(--line2);border-radius:3px;
+    margin:10px 0 12px;overflow:hidden}
+  .confbar i{display:block;height:100%;width:0;background:var(--ink);
+    border-radius:3px;transition:width .6s}
+  .regime-box p{font-size:11.5px;line-height:1.8;color:#45474C}
+  .kevents{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  .kevents div{font-size:10.5px;color:var(--sub);padding:2px 0}
+  .kevents b{color:var(--red);font-weight:700;margin-right:8px}
+
+  .chart-grid{display:grid;grid-template-columns:220px 1fr;gap:20px}
+  .stat-col{border-right:1px solid var(--line);padding-right:20px}
+  .stat-col dl{display:flex;justify-content:space-between;align-items:baseline;
+    padding:7px 0;border-bottom:1px solid var(--line2);font-size:11px}
+  .stat-col dt{color:var(--sub);letter-spacing:.06em}
+  .stat-col dd{font-weight:700;font-size:13px}
+  .stat-col dd.up{color:var(--green)} .stat-col dd.down{color:var(--red)}
+  .stat-col .memo{font-size:9.5px;color:var(--sub);line-height:1.7;
+    margin-top:12px;letter-spacing:.02em}
+  .chart-area{position:relative}
+  .caution-tag{position:absolute;top:6px;right:6px;font-size:9px;
+    letter-spacing:.1em;background:var(--red-bg);color:var(--red);
+    border:1px solid #E7C6C4;padding:3px 8px;border-radius:2px}
+
+  table{width:100%;border-collapse:collapse}
+  th{font-size:9px;color:var(--sub);text-align:left;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;
+    padding:6px 8px;border-bottom:1.5px solid var(--ink)}
+  td{padding:9px 8px;border-bottom:1px solid var(--line2);font-size:12px}
+  tr:last-child td{border-bottom:none}
+  .t-regime{color:var(--slate);font-weight:700;font-size:11px}
+  .t-pl{font-weight:700}
+  .t-pl.up{color:var(--green)} .t-pl.down{color:var(--red)} .t-pl.flat{color:var(--sub)}
+  .verdict{font-size:10px;padding:2px 8px;border-radius:2px;font-weight:600}
+  .verdict.ok{background:var(--green-bg);color:var(--green)}
+  .verdict.miss{background:var(--red-bg);color:var(--red)}
+  .verdict.na{background:var(--line2);color:var(--sub)}
+  .empty{color:var(--sub);font-size:11px;padding:14px 8px}
+
+  .statusbar{display:flex;gap:18px;flex-wrap:wrap;padding:9px 20px;
+    font-size:9px;color:var(--sub);letter-spacing:.12em;
+    text-transform:uppercase;border-top:1.5px solid var(--ink)}
+  .statusbar b{color:var(--ink)}
+  .statusbar .g{color:var(--green)}
+  .foot{max-width:1240px;margin:8px auto 20px;text-align:center;
+    font-size:9px;color:var(--sub);letter-spacing:.14em}
+
+  @media (max-width:820px){
+    .pnl-grid{grid-template-columns:1fr}
+    .pnl-right{border-left:none;padding-left:0;margin-top:16px}
+    .pnl-left{padding-right:0}
+    .chart-grid{grid-template-columns:1fr}
+    .stat-col{border-right:none;padding-right:0;
+      border-bottom:1px solid var(--line);padding-bottom:12px}
+    .substats{grid-template-columns:repeat(2,1fr)}
+    .substat:nth-child(2){border-right:none}
+    .substat{padding:10px 8px 2px}
+  }
+  @media (max-width:520px){
+    body{padding:10px 8px 0;font-size:11px}
+    header{padding:12px 14px;gap:8px}
+    .title h1{font-size:13px}
+    .utc{width:100%;order:9;font-size:11px;color:var(--sub)}
+    section{padding:14px 14px}
+    .regime-name{font-size:19px}
+    .conf-num{font-size:19px}
+    th:nth-child(3),td:nth-child(3),
+    th:nth-child(5),td:nth-child(5){display:none}
+    td{padding:9px 5px;font-size:11.5px}
+    .statusbar{gap:8px 14px;padding:9px 14px}
+    .foot{font-size:8px}
+  }
+  @media (prefers-reduced-motion:reduce){.badge .blink{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+<header>
+  <div class="mark">⚓</div>
+  <div class="title">
+    <small>Spot Observation · Rule Engine · One Judgment / Day</small>
+    <h1>CAPTAIN HOOK · <span class="accent">BTC/JPY</span></h1>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge live"><span class="blink"></span><span id="mode">LIVE · —</span></div>
+  <div class="badge">DAY <b style="color:var(--ink)" id="obsday">&nbsp;—</b></div>
+  <div class="utc" id="clock">—</div>
+</header>
+
+<section>
+  <div class="pnl-grid">
+    <div class="pnl-left">
+      <div class="sec-head" style="margin-bottom:6px">
+        <span class="sq"></span><h2>BTC/JPY · <span class="jp">現在値</span></h2>
+        <span class="note">Bitbank Spot · 60s Refresh</span>
+      </div>
+      <div class="chips">
+        <span class="chip pill-red jp">no_trade 検証つき観測</span>
+        <span class="chip" id="chip-trades">— trades</span>
+        <span class="chip jp" id="chip-days">観測 —日目</span>
+      </div>
+      <div class="hero-price">
+        <span class="yen">¥</span><span id="price">—</span><span class="chg" id="chg"></span>
+      </div>
+      <div class="substats">
+        <div class="substat"><div class="v jp" id="k-real">—</div><div class="k">実現損益</div></div>
+        <div class="substat"><div class="v jp" id="k-avoid">—</div><div class="k">回避損益</div></div>
+        <div class="substat"><div class="v" id="k-hit">—</div><div class="k">判定的中</div></div>
+        <div class="substat"><div class="v jp" id="k-cap">—</div><div class="k">運用資金</div></div>
+      </div>
+    </div>
+
+    <div class="pnl-right">
+      <div class="sec-head" style="margin-bottom:10px">
+        <span class="sq"></span><h2 class="jp">本日の判定 — 7:00</h2>
+        <span class="note">Regime Call</span>
+      </div>
+      <div class="regime-box">
+        <div class="top">
+          <div class="regime-name" id="regime">—</div>
+          <div class="conf-num"><span id="conf">—</span><small>CONFIDENCE</small></div>
+        </div>
+        <div class="confbar"><i id="confbar"></i></div>
+        <p class="jp" id="summary">判定待ち(毎朝7:00に更新)</p>
+        <div class="kevents" id="kevents"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="sq"></span><h2 class="jp">BTC/JPY · 本日の値動き と 仮想エントリー水準</h2>
+    <span class="note">0:00–24:00 JST · Virtual long @ 9:00 on no_trade days</span>
+  </div>
+  <div class="chart-grid">
+    <div class="stat-col">
+      <dl><dt class="jp">仮想取得単価</dt><dd id="ventry">—</dd></dl>
+      <dl><dt class="jp">仮想損益(今)</dt><dd id="vpl">—</dd></dl>
+      <dl><dt class="jp">本日レンジ</dt><dd id="dayrange">—</dd></dl>
+      <dl><dt>F&G INDEX</dt><dd id="fng">—</dd></dl>
+      <div class="memo jp" id="memo"></div>
+    </div>
+    <div class="chart-area">
+      <span class="caution-tag" id="ctag" style="display:none"></span>
+      <svg id="chart" width="100%" height="200" viewBox="0 0 760 200"
+           preserveAspectRatio="none" role="img" aria-label="本日の価格チャート"></svg>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="sq"></span><h2 class="jp">no_trade 検証ログ</h2>
+    <span class="note">If we had entered — counterfactual record</span>
+  </div>
+  <table>
+    <thead>
+      <tr><th class="jp">日付</th><th class="jp">判定</th><th>Conf.</th>
+          <th class="jp">仮想損益 (T/R)</th><th class="jp">決済</th><th class="jp">評価</th></tr>
+    </thead>
+    <tbody id="cflog">
+      <tr><td colspan="6" class="empty jp">記録が貯まるとここに表示されます</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="statusbar">
+  <span>AGENT <b class="g">ONLINE</b></span>
+  <span>MODE <b id="s-mode">—</b></span>
+  <span>VPS <b>CONOHA · UBUNTU 24.04</b></span>
+  <span>FEED <b>BITBANK PUBLIC</b></span>
+  <span>NEXT JOURNAL <b>00:05 JST</b></span>
+  <span>LAST SYNC <b id="sync">—</b></span>
+</div>
+
+</div>
+<div class="foot jp">閲覧専用 — このページから売買操作は一切できません</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const yen = n => n == null ? "—" : n.toLocaleString("ja-JP");
+const pl = n => n == null ? "—" : (n > 0 ? "+" : "") + n.toLocaleString("ja-JP") + "円";
+const plClass = n => n == null ? "" : n > 0 ? "up" : n < 0 ? "down" : "flat";
+
+const EXIT_JA = {stop_loss: "損切り到達", take_profit: "利確到達",
+                 day_close: "引け決済"};
+const DOW = ["日","月","火","水","木","金","土"];
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g,
+    c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function hhmmToHour(s){
+  const [h, m] = String(s).split(":").map(Number);
+  return (isNaN(h) ? 0 : h) + (isNaN(m) ? 0 : m) / 60;
+}
+
+function drawChart(candles, windows, ventry){
+  const svg = $("chart");
+  const W = 760, H = 200;
+  let parts = [];
+
+  // 警戒時間帯(赤帯)
+  for(const w of windows || []){
+    if(!Array.isArray(w) || w.length < 2) continue;
+    let a = hhmmToHour(w[0]), b = hhmmToHour(w[1]);
+    if(b <= a) b = 24;
+    parts.push(`<rect x="${a/24*W}" y="0" width="${(b-a)/24*W}" height="${H}" fill="#F9ECEB"/>`);
+  }
+  // グリッド
+  for(const y of [50, 100, 150])
+    parts.push(`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#ECEAE3"/>`);
+  for(const h of [6, 12, 18]){
+    parts.push(`<line x1="${h/24*W}" y1="0" x2="${h/24*W}" y2="${H}" stroke="#ECEAE3"/>`);
+    parts.push(`<text x="${h/24*W+4}" y="${H-6}" font-size="9" fill="#8A8D93">${h}:00</text>`);
+  }
+
+  if(candles && candles.length >= 2){
+    const closes = candles.map(c => c.close);
+    let lo = Math.min(...closes), hi = Math.max(...closes);
+    if(ventry){ lo = Math.min(lo, ventry); hi = Math.max(hi, ventry); }
+    const pad = (hi - lo) * 0.15 || hi * 0.001;
+    lo -= pad; hi += pad;
+    const X = h => h / 24 * W;
+    const Y = v => H - (v - lo) / (hi - lo) * H;
+
+    if(ventry){
+      parts.push(`<line x1="0" y1="${Y(ventry)}" x2="${W}" y2="${Y(ventry)}"
+        stroke="#5B6B7E" stroke-width="1.4" stroke-dasharray="6 5"/>`);
+      parts.push(`<text x="6" y="${Y(ventry)-5}" font-size="9" fill="#5B6B7E"
+        letter-spacing="1">VIRTUAL ENTRY ¥${yen(ventry)}</text>`);
+    }
+    const d = candles.map((c, i) =>
+      (i ? "L" : "M") + X(c.h).toFixed(1) + "," + Y(c.close).toFixed(1)).join(" ");
+    parts.push(`<path d="${d}" fill="none" stroke="#17181A" stroke-width="1.8"/>`);
+    const last = candles[candles.length - 1];
+    parts.push(`<circle cx="${X(last.h)}" cy="${Y(last.close)}" r="3.5" fill="#C6403B"/>`);
+  } else {
+    parts.push(`<text x="${W/2}" y="${H/2}" font-size="11" fill="#8A8D93"
+      text-anchor="middle">データ取得待ち…</text>`);
+  }
+  svg.innerHTML = parts.join("");
+}
+
+function render(s){
+  if(s.error){ $("summary").textContent = "サーバーエラー: " + s.error; return; }
+
+  // ヘッダー / ステータス
+  $("mode").textContent = "LIVE · " + (s.mode || "—");
+  $("s-mode").textContent = s.mode || "—";
+  $("obsday").textContent = "\u00A0" + (s.kpi.obs_days ?? "—");
+  const d = new Date(s.now);
+  $("sync").textContent = d.toLocaleTimeString("ja-JP");
+
+  // 価格
+  $("price").textContent = yen(s.price.last);
+  const chg = s.price.chg24h_pct;
+  const chgEl = $("chg");
+  if(chg == null){ chgEl.textContent = ""; }
+  else{
+    chgEl.className = "chg " + (chg < 0 ? "down" : "up");
+    chgEl.innerHTML = (chg < 0 ? "▼ " : "▲ ") + Math.abs(chg).toFixed(1)
+      + "%<small>24H</small>";
+  }
+
+  // KPI
+  $("chip-trades").textContent = s.kpi.trades_total + " trades";
+  $("chip-days").textContent = "観測 " + s.kpi.obs_days + "日目";
+  $("k-real").textContent = (s.kpi.realized_total === 0 ? "±0円" : pl(s.kpi.realized_total));
+  $("k-real").className = "v jp " + plClass(s.kpi.realized_total);
+  $("k-avoid").textContent = (s.kpi.avoided_total === 0 ? "±0円" : pl(s.kpi.avoided_total));
+  $("k-avoid").className = "v jp " + plClass(s.kpi.avoided_total);
+  $("k-hit").textContent = s.kpi.hit;
+  $("k-cap").textContent = yen(s.kpi.capital) + "円";
+
+  // 本日の判定
+  const rg = s.plan.regime;
+  $("regime").textContent = rg ? rg.toUpperCase() : "—";
+  $("regime").className = "regime-name r-" + (rg || "");
+  $("conf").textContent = s.plan.confidence ?? "—";
+  $("confbar").style.width = ((s.plan.confidence || 0) * 100) + "%";
+  $("summary").textContent = s.plan.summary || "判定待ち(毎朝7:00に更新)";
+  $("kevents").innerHTML = (s.plan.key_events || []).map(ev => {
+    const m = String(ev).match(/^(\d{1,2}:\d{2})\s*(.*)$/);
+    return m ? `<div><b>${esc(m[1])}</b><span class="jp">${esc(m[2])}</span></div>`
+             : `<div><span class="jp">${esc(ev)}</span></div>`;
+  }).join("");
+
+  // チャート・仮想トレード
+  drawChart(s.candles_today, s.plan.caution_windows, s.virtual && s.virtual.entry);
+  const wins = s.plan.caution_windows || [];
+  if(wins.length){
+    $("ctag").style.display = "";
+    $("ctag").textContent = "CAUTION " + wins.map(w => w.join("–")).join(" / ");
+  } else $("ctag").style.display = "none";
+
+  $("ventry").textContent = s.virtual ? "¥" + yen(s.virtual.entry) : "—";
+  const vp = s.virtual ? s.virtual.pl_now : null;
+  $("vpl").textContent = pl(vp);
+  $("vpl").className = plClass(vp);
+  $("dayrange").textContent = (s.price.day_low && s.price.day_high)
+    ? "¥" + yen(s.price.day_low) + "–" + yen(s.price.day_high) : "—";
+  $("fng").textContent = s.fng ? s.fng.value + " · " + s.fng.label.toUpperCase() : "—";
+  $("fng").className = s.fng && s.fng.value <= 25 ? "down" : "";
+  $("memo").textContent = s.virtual
+    ? (vp < 0 ? `見送り判定は現時点で ${yen(Math.abs(vp))}円の損失を回避しています。`
+      : vp > 0 ? `現時点の機会損失は ${yen(vp)}円です。`
+      : "仮想トレードは現時点でほぼ損益ゼロです。")
+    : (rg === "no_trade" ? "9:00の足の確定後に仮想トレードを表示します。" : "");
+
+  // 検証ログ
+  const tb = $("cflog");
+  if(!s.cf_log || !s.cf_log.length){
+    tb.innerHTML = `<tr><td colspan="6" class="empty jp">記録が貯まるとここに表示されます</td></tr>`;
+  } else {
+    tb.innerHTML = s.cf_log.map(r => {
+      const dd = new Date(r.date + "T00:00:00");
+      const avg = (r.trend_pl != null && r.range_pl != null)
+        ? (r.trend_pl + r.range_pl) / 2 : (r.trend_pl ?? r.range_pl);
+      const verdict = avg == null ? ["na","—"]
+        : avg < 0 ? ["ok","回避成功"] : avg > 0 ? ["miss","機会損失"] : ["na","中立"];
+      return `<tr>
+        <td>${r.date.slice(5).replace("-","-")} <span class="jp">${DOW[dd.getDay()]}</span></td>
+        <td class="t-regime">NO_TRADE</td>
+        <td>${r.confidence ?? "—"}</td>
+        <td class="t-pl ${plClass(avg)}">${pl(r.trend_pl)} / ${pl(r.range_pl)}</td>
+        <td class="jp" style="color:var(--sub);font-size:11px">${EXIT_JA[r.exit_reason] || "—"}</td>
+        <td><span class="verdict ${verdict[0]} jp">${verdict[1]}</span></td>
+      </tr>`;
+    }).join("");
+  }
+}
+
+async function refresh(){
+  try{
+    const r = await fetch("/api/state", {cache: "no-store"});
+    if(r.ok) render(await r.json());
+  }catch(e){ /* 次回リトライ */ }
+}
+refresh();
+setInterval(refresh, 60000);
+
+function tick(){
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  $("clock").textContent =
+    `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ` +
+    `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} JST`;
+}
+tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>
