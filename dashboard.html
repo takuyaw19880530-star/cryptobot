@@ -280,9 +280,21 @@ function hhmmToHour(s){
   return (isNaN(h) ? 0 : h) + (isNaN(m) ? 0 : m) / 60;
 }
 
+function niceStep(raw){
+  // 目盛り間隔を1/2/5×10^nのキリの良い値に丸める
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const r = raw / mag;
+  return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 5 ? 5 : 10) * mag;
+}
+function man(v){ // 円→「万」表記 (10,289,540 → 1,029.0万)
+  return (v / 10000).toLocaleString("ja-JP",
+    {minimumFractionDigits: 0, maximumFractionDigits: 1}) + "万";
+}
+
 function drawChart(candles, windows, ventry){
   const svg = $("chart");
   const W = 760, H = 200;
+  const PAD_B = 16;               // 下端: 時刻ラベル用の余白
   let parts = [];
 
   // 警戒時間帯(赤帯)
@@ -290,14 +302,17 @@ function drawChart(candles, windows, ventry){
     if(!Array.isArray(w) || w.length < 2) continue;
     let a = hhmmToHour(w[0]), b = hhmmToHour(w[1]);
     if(b <= a) b = 24;
-    parts.push(`<rect x="${a/24*W}" y="0" width="${(b-a)/24*W}" height="${H}" fill="#F9ECEB"/>`);
+    parts.push(`<rect x="${a/24*W}" y="0" width="${(b-a)/24*W}" height="${H-PAD_B}" fill="#F9ECEB"/>`);
   }
-  // グリッド
-  for(const y of [50, 100, 150])
-    parts.push(`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#ECEAE3"/>`);
-  for(const h of [6, 12, 18]){
-    parts.push(`<line x1="${h/24*W}" y1="0" x2="${h/24*W}" y2="${H}" stroke="#ECEAE3"/>`);
-    parts.push(`<text x="${h/24*W+4}" y="${H-6}" font-size="9" fill="#8A8D93">${h}:00</text>`);
+
+  // 横軸: 3時間ごとに補助線、6時間ごとにラベル
+  for(let h = 3; h < 24; h += 3){
+    const x = h / 24 * W;
+    parts.push(`<line x1="${x}" y1="0" x2="${x}" y2="${H-PAD_B}"
+      stroke="#ECEAE3" stroke-width="${h % 6 === 0 ? 1 : 0.5}"/>`);
+    if(h % 6 === 0)
+      parts.push(`<text x="${x}" y="${H-4}" font-size="9" fill="#8A8D93"
+        text-anchor="middle">${h}:00</text>`);
   }
 
   if(candles && candles.length >= 2){
@@ -307,19 +322,32 @@ function drawChart(candles, windows, ventry){
     const pad = (hi - lo) * 0.15 || hi * 0.001;
     lo -= pad; hi += pad;
     const X = h => h / 24 * W;
-    const Y = v => H - (v - lo) / (hi - lo) * H;
+    const Y = v => (H - PAD_B) - (v - lo) / (hi - lo) * (H - PAD_B);
+
+    // 縦軸: キリの良い価格で水平線+目盛りラベル
+    const step = niceStep((hi - lo) / 4);
+    for(let v = Math.ceil(lo / step) * step; v < hi; v += step){
+      const y = Y(v);
+      if(y < 12 || y > H - PAD_B - 4) continue; // 端に寄りすぎるラベルは省く
+      parts.push(`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#ECEAE3"/>`);
+      parts.push(`<text x="4" y="${y-4}" font-size="9" fill="#8A8D93">¥${man(v)}</text>`);
+    }
 
     if(ventry){
       parts.push(`<line x1="0" y1="${Y(ventry)}" x2="${W}" y2="${Y(ventry)}"
         stroke="#5B6B7E" stroke-width="1.4" stroke-dasharray="6 5"/>`);
-      parts.push(`<text x="6" y="${Y(ventry)-5}" font-size="9" fill="#5B6B7E"
-        letter-spacing="1">VIRTUAL ENTRY ¥${yen(ventry)}</text>`);
+      parts.push(`<text x="${W-6}" y="${Y(ventry)-5}" font-size="9" fill="#5B6B7E"
+        letter-spacing="1" text-anchor="end">VIRTUAL ENTRY ¥${yen(ventry)}</text>`);
     }
     const d = candles.map((c, i) =>
       (i ? "L" : "M") + X(c.h).toFixed(1) + "," + Y(c.close).toFixed(1)).join(" ");
     parts.push(`<path d="${d}" fill="none" stroke="#17181A" stroke-width="1.8"/>`);
     const last = candles[candles.length - 1];
     parts.push(`<circle cx="${X(last.h)}" cy="${Y(last.close)}" r="3.5" fill="#C6403B"/>`);
+    // 現在値ラベル(点の右か左の空いている側に)
+    const lx = X(last.h), anchor = lx > W - 90 ? "end" : "start";
+    parts.push(`<text x="${lx + (anchor === "end" ? -8 : 8)}" y="${Y(last.close)+3}"
+      font-size="9" font-weight="700" fill="#C6403B" text-anchor="${anchor}">¥${man(last.close)}</text>`);
   } else {
     parts.push(`<text x="${W/2}" y="${H/2}" font-size="11" fill="#8A8D93"
       text-anchor="middle">データ取得待ち…</text>`);
