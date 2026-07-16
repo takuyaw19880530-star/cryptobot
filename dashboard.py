@@ -244,13 +244,21 @@ def build_state() -> dict:
         "trades_total": _trades_total(),
     }
 
-    # --- 検証ログ(直近7件, 新しい順) ---
+    # --- 検証ログ(直近7日分の全判定。no_trade以外の日も行を出す) ---
+    # 当日はまだ夜間ジャーナル前で検証未集計のため対象外(date < today)
+    cf_by_date = {r["date"]: r for r in cf_all}
+    con = db.connect()
+    plan_rows = con.execute(
+        "SELECT date, regime, confidence FROM plans "
+        "WHERE date < ? ORDER BY date DESC LIMIT 7", (today,)).fetchall()
+    con.close()
     cf_log = []
-    for rec in cf_all[-7:][::-1]:
-        p = db.load_plan(rec["date"]) or {}
+    for pr in plan_rows:
+        rec = cf_by_date.get(pr["date"]) or {}
         cf_log.append({
-            "date": rec["date"],
-            "confidence": p.get("confidence"),
+            "date": pr["date"],
+            "regime": pr["regime"],
+            "confidence": pr["confidence"],
             "trend_pl": (rec.get("trend_params") or {}).get("pl_jpy"),
             "range_pl": (rec.get("range_params") or {}).get("pl_jpy"),
             "exit_reason": (rec.get("trend_params") or {}).get("exit_reason"),
