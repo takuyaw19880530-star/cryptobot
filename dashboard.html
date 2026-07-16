@@ -114,6 +114,9 @@
   td{padding:9px 8px;border-bottom:1px solid var(--line2);font-size:12px}
   tr:last-child td{border-bottom:none}
   .t-regime{color:var(--slate);font-weight:700;font-size:11px}
+  .t-regime.up{color:var(--green)}
+  .t-regime.down{color:var(--red)}
+  .t-regime.rangey{color:var(--sub)}
   .t-pl{font-weight:700}
   .t-pl.up{color:var(--green)} .t-pl.down{color:var(--red)} .t-pl.flat{color:var(--sub)}
   .verdict{font-size:10px;padding:2px 8px;border-radius:2px;font-weight:600}
@@ -252,7 +255,7 @@
       <tr><td colspan="6" class="empty jp">記録が貯まるとここに表示されます</td></tr>
     </tbody>
   </table>
-  <p class="tbl-note jp">T=トレンド用パラメータ(損切り広め・利確深め) / R=レンジ用パラメータ(どちらも浅め)で試算した仮想損益。両方マイナスなら「どのルールでも負けていた=見送り正解」の意味。</p>
+  <p class="tbl-note jp">T=トレンド用パラメータ(損切り広め・利確深め) / R=レンジ用パラメータ(どちらも浅め)で試算した仮想損益。両方マイナスなら「どのルールでも負けていた=見送り正解」の意味。仮想トレードの検証はno_trade判定の日のみ行い、それ以外の判定の日は「検証対象外」と表示。</p>
 </section>
 
 <div class="statusbar">
@@ -433,18 +436,27 @@ function render(s){
   if(!s.cf_log || !s.cf_log.length){
     tb.innerHTML = `<tr><td colspan="6" class="empty jp">記録が貯まるとここに表示されます</td></tr>`;
   } else {
+    const RG_CLASS = {trend_up: "up", trend_down: "down", range: "rangey"};
     tb.innerHTML = s.cf_log.map(r => {
       const dd = new Date(r.date + "T00:00:00");
-      const avg = (r.trend_pl != null && r.range_pl != null)
-        ? (r.trend_pl + r.range_pl) / 2 : (r.trend_pl ?? r.range_pl);
-      const verdict = avg == null ? ["na","—"]
-        : avg < 0 ? ["ok","回避成功"] : avg > 0 ? ["miss","機会損失"] : ["na","中立"];
+      const isNT = r.regime === "no_trade";
+      let verdict, plCell;
+      if(!isNT){
+        verdict = ["na", "検証対象外"];
+        plCell = `<span style="color:var(--sub)">—</span>`;
+      } else {
+        const avg = (r.trend_pl != null && r.range_pl != null)
+          ? (r.trend_pl + r.range_pl) / 2 : (r.trend_pl ?? r.range_pl);
+        verdict = avg == null ? ["na", "記録なし"]
+          : avg < 0 ? ["ok", "回避成功"] : avg > 0 ? ["miss", "機会損失"] : ["na", "中立"];
+        plCell = `<span class="t-pl ${plClass(avg)}">${pl(r.trend_pl)} / ${pl(r.range_pl)}</span>`;
+      }
       return `<tr>
-        <td>${r.date.slice(5).replace("-","-")} <span class="jp">${DOW[dd.getDay()]}</span></td>
-        <td class="t-regime">NO_TRADE</td>
+        <td>${r.date.slice(5)} <span class="jp">${DOW[dd.getDay()]}</span></td>
+        <td class="t-regime ${RG_CLASS[r.regime] || ""}">${(r.regime || "—").toUpperCase()}</td>
         <td>${r.confidence ?? "—"}</td>
-        <td class="t-pl ${plClass(avg)}">${pl(r.trend_pl)} / ${pl(r.range_pl)}</td>
-        <td class="jp" style="color:var(--sub);font-size:11px">${EXIT_JA[r.exit_reason] || "—"}</td>
+        <td>${plCell}</td>
+        <td class="jp" style="color:var(--sub);font-size:11px">${isNT ? (EXIT_JA[r.exit_reason] || "—") : "—"}</td>
         <td><span class="verdict ${verdict[0]} jp">${verdict[1]}</span></td>
       </tr>`;
     }).join("");
