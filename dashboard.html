@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Captain Hook">
+<meta name="theme-color" content="#F7F6F2">
 <title>CAPTAIN HOOK · BTC/JPY — 観測レポート</title>
 <style>
   :root{
@@ -117,6 +121,8 @@
   .verdict.miss{background:var(--red-bg);color:var(--red)}
   .verdict.na{background:var(--line2);color:var(--sub)}
   .empty{color:var(--sub);font-size:11px;padding:14px 8px}
+  .tbl-note{font-size:9.5px;color:var(--sub);line-height:1.7;margin-top:10px;
+    padding-top:8px;border-top:1px dashed var(--line)}
 
   .statusbar{display:flex;gap:18px;flex-wrap:wrap;padding:9px 20px;
     font-size:9px;color:var(--sub);letter-spacing:.12em;
@@ -246,6 +252,7 @@
       <tr><td colspan="6" class="empty jp">記録が貯まるとここに表示されます</td></tr>
     </tbody>
   </table>
+  <p class="tbl-note jp">T=トレンド用パラメータ(損切り広め・利確深め) / R=レンジ用パラメータ(どちらも浅め)で試算した仮想損益。両方マイナスなら「どのルールでも負けていた=見送り正解」の意味。</p>
 </section>
 
 <div class="statusbar">
